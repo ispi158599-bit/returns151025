@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>C - Return | Lodge a Return</title>
+<style>
+  :root{
+    --brand:#10b981;
+    --brand-600:#059669;
+    --brand-700:#047857;
+    --accent:#f59e0b;
+    --bg:#f5f7fb;
+    --panel:#ffffff;
+    --border:#e5e9f2;
+    --text:#0f172a;
+    --muted:#64748b;
+    --radius:14px;
+    --shadow:0 6px 18px rgba(9,16,35,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font:15px/1.4 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text)}
+  .brandbar{
+    background:linear-gradient(90deg, var(--brand) 0%, #15c28f 35%, #16dfa3 65%, #12c2b3 100%);
+    color:#fff; box-shadow:var(--shadow);
+  }
+  .brandbar-inner{padding:12px 16px; display:flex; justify-content:space-between; align-items:center}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px}
+  .brand .mark{width:28px; height:28px; border-radius:6px; background:#fff; color:var(--brand); display:grid; place-items:center; font-weight:900}
+  .container{max-width:800px; margin:24px auto; background:var(--panel); padding:24px; border-radius:var(--radius); box-shadow:var(--shadow)}
+  h1{margin:0 0 20px; font-size:24px}
+  label{display:block; margin-top:16px; margin-bottom:6px; font-weight:600; font-size:14px; color:var(--text)}
+  input,textarea,select{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); font-size:14px; color:var(--text); background:#fff;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--brand); outline:none; box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+  textarea{resize:vertical; min-height:80px}
+  .dropzone{margin-top:10px; border:2px dashed #b6ebd4; border-radius:10px; padding:20px; text-align:center; color:var(--muted); cursor:pointer; background:#f5fffa; transition:.2s}
+  .dropzone.drag{background:#eafff4; border-color:#68d3a8}
+  .agreement{margin-top:20px; display:flex; align-items:center; gap:8px; font-size:14px; color:var(--muted)}
+  .btn{margin-top:24px; padding:12px 20px; font-size:16px; font-weight:700; border:none; border-radius:10px; cursor:pointer; background:var(--brand); color:#fff; box-shadow:var(--shadow)}
+  .btn:hover{background:var(--brand-600)}
+  .toast{position:fixed; right:16px; bottom:16px; background:#0b1220; color:#fff; padding:12px 16px; border-radius:10px; box-shadow:var(--shadow); opacity:0; transform:translateY(8px); transition:.3s}
+  .toast.show{opacity:1; transform:translateY(0)}
+
+  /* --- Stage bubbles --- */
+.stage{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  margin:14px 0;
+  overflow:clip;
+}
+.stage>summary{
+  list-style:none; cursor:pointer; user-select:none;
+  padding:12px 14px; display:flex; align-items:center; gap:10px;
+  background:linear-gradient(180deg,#ffffff,#f9fbff);
+  border-bottom:1px solid var(--border);
+}
+.stage[open]>summary{
+  background:linear-gradient(180deg,#f9fffc,#ffffff);
+  border-bottom-color:#bfe8d6;
+  box-shadow:inset 0 -1px 0 rgba(16,185,129,.18);
+}
+.stage-pill{
+  font-weight:800; font-size:12px; padding:6px 10px; border-radius:999px;
+  background:#eef2ff; color:#1e293b; border:1px solid #dbe3f0;
+}
+.stage[open] .stage-pill{ background:#ecfdf5; color:#065f46; border-color:#bfe8d6; }
+.stage-title{ font-weight:800; color:#0f172a; }
+.stage-status{ margin-left:auto; font-size:12px; font-weight:700; color:var(--muted); }
+.stage-body{ padding:14px; }
+
+/* Agreement outside the bubble — force left-aligned, full-width layout */
+.container .agreement {
+  display: grid;                /* checkbox | text */
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  width: 100%;
+}
+
+.container .agreement input[type="checkbox"] {
+  margin: 4px 0 0;              /* align with first line of text */
+  justify-self: start;
+  flex: none;
+}
+
+.container .agreement label {
+  margin: 0;
+  text-align: left;
+  line-height: 1.6;
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* === Two-column layout === */
+.layout{
+  max-width: 1200px;          /* wider than the old 800px to allow a sidebar */
+  margin: 24px auto;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+}
+
+/* Sidebar */
+.sidebar{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  align-self: start;
+}
+
+.sb-head{
+  font-weight: 800;
+  color: var(--text);
+  padding: 8px 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sb-nav{ display:flex; flex-direction:column; padding: 8px 4px; }
+
+.sb-item{
+  appearance:none; border:1px solid var(--border);
+  background:#fff; color:var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 6px 6px;
+  display:grid;
+  grid-template-columns: 22px 1fr auto;
+  gap:10px; align-items:center;
+  cursor:pointer; font-weight:700;
+  box-shadow: 0 2px 6px rgba(2,6,23,.05);
+  transition: border .15s, box-shadow .15s, transform .05s;
+}
+.sb-item:hover{ border-color:#cfe9df; box-shadow:0 4px 12px rgba(16,185,129,.12); }
+.sb-item:active{ transform: translateY(1px); }
+
+.sb-item.active{
+  background: linear-gradient(180deg,#ffffff,#f6fff9);
+  border-color: #b6ebd4;
+  box-shadow: 0 4px 12px rgba(16,185,129,.16);
+}
+.sb-item.active .go{ color: var(--brand); font-weight:900; }
+
+.sb-ico{ display:inline-grid; place-items:center; color: var(--brand-700); }
+.sb-item.active .sb-ico{ color: var(--brand); }
+
+.chev{ color:#64748b; font-size:12px; }
+.go{ color:#0f172a; font-size:18px; line-height:1; }
+
+/* Make the main .container stretch nicely next to the sidebar */
+.layout > .container{
+  margin: 0;                   /* remove the old auto margins */
+  width: 100%;                 /* full width of grid column */
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 980px){
+  .layout{ grid-template-columns: 1fr; }
+  .sidebar{ order: -1; }       /* sidebar above content on mobile */
+}
+
+.danger-text { color:#b91c1c; font-size:14px; }
+.danger-link { color:#b91c1c; text-decoration:underline; }
+
+/* Step 4 agreements (two tidy rows) */
+.agreement-list{
+  display: grid;
+  gap: 10px;
+  padding: 10px 14px 0;     /* no top border line */
+  border-top: none;         /* remove the grey line */
+}
+
+.agree{
+  display: grid;
+  grid-template-columns: 18px 1fr; /* checkbox | text */
+  align-items: start;
+  gap: 10px;
+  margin: 6px 0;                /* <— adds vertical space between each checkbox */
+  padding: 6px 0;               /* <— adds white space above/below text */
+}
+
+.agree input[type="checkbox"] {
+  margin-top: 4px;
+}
+
+.agree span {
+  line-height: 1.7;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.link-inline {
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.link-inline:hover {
+  text-decoration: underline;
+}
+
+.phone-upload-row{ margin-top:10px; }
+.btn.outline{
+  appearance:none;border:1px solid var(--border);background:#fff;color:#065f46;
+  font-weight:800;padding:8px 12px;border-radius:10px;cursor:pointer;
+}
+.btn.sm{ padding:6px 10px; border-radius:8px; }
+.qr-wrap{ display:flex; gap:16px; align-items:center; }
+#qrBox{ width:140px; height:140px; padding:8px; background:#fff; border:1px solid var(--border); border-radius:10px; }
+.qr-info{ flex:1; }
+.link-row{ display:flex; gap:8px; align-items:center; margin:8px 0; }
+.link-row input{ flex:1; border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:#f8fafc; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.small{ font-size:13px; }
+.tiny{ font-size:12px; }
+
+/* Phone upload sheet */
+.qr-sheet{
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 148px 1fr; /* QR | details */
+  gap: 16px;
+}
+.qr-left{ display:flex; align-items:center; justify-content:center }
+.qr-box{
+  width:140px;height:140px;padding:8px;background:#fff;border:1px solid var(--border);
+  border-radius:12px; display:flex;align-items:center;justify-content:center;
+}
+.qr-right{ display:flex; flex-direction:column; gap:10px }
+.qr-title{ margin:0; font-size:16px; font-weight:900 }
+.qr-sub{ margin:0; color:var(--muted) }
+
+.qr-row{ display:flex; align-items:center; gap:10px }
+.code-label{ color:#475569; font-weight:800 }
+.code-pill{
+  display:inline-block; padding:4px 10px; border-radius:999px; font-weight:800; font-size:12px;
+  background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; white-space:nowrap;
+}
+
+.url-group{ display:flex; gap:8px; align-items:center }
+.url-input{
+  flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:10px;
+  background:#f8fafc; overflow:hidden; text-overflow:ellipsis;
+}
+.btn.copy{
+  appearance:none; border:1px solid var(--brand); background:var(--brand);
+  color:#fff; font-weight:800; padding:8px 12px; border-radius:10px; cursor:pointer;
+}
+.btn.copy:hover{ background:var(--brand-700) }
+
+.qr-meta{ font-size:12px; color:var(--muted) }
+.qr-actions{ margin-top:2px }
+
+/* Trigger button style */
+.btn.outline{
+  appearance:none;border:1px solid var(--border);background:#fff;color:#065f46;
+  font-weight:800;padding:8px 12px;border-radius:10px;cursor:pointer;
+}
+.btn.outline:hover{ border-color:#b6ebd4; box-shadow:0 3px 10px rgba(16,185,129,.12) }
+
+/* Small monospace helper */
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
+
+:root{
+    --cc-brand:#10b981; --cc-brand-700:#0ea371;
+    --cc-ink:#0f172a; --cc-muted:#64748b; --cc-border:#e5e7eb; --cc-bg:#fafbff;
+  }
+  .cc-chat{font:14px/1.45 Inter,system-ui,Segoe UI,Roboto,Arial;background:#fff;border:1px solid var(--cc-border);
+    border-radius:14px; box-shadow:0 10px 30px rgba(15,23,42,.08); max-width:720px; margin:16px auto; overflow:hidden}
+  .ccc-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--cc-border);
+    background:linear-gradient(90deg, var(--cc-brand), #15c28f 45%, #16dfa3 75%, #12c2b3); color:#fff}
+  .ccc-agent{display:flex;gap:10px;align-items:center}
+  .ccc-avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:900;background:#fff;color:var(--cc-brand)}
+  .ccc-name{font-weight:900}
+  .ccc-status{font-size:12px;opacity:.9}
+  .ccc-pill{background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); padding:6px 10px; border-radius:999px; font-weight:800}
+
+  .ccc-log{max-height:420px; overflow:auto; padding:10px 12px; background:var(--cc-bg); scroll-behavior:smooth}
+  .ccc-day{display:flex;justify-content:center;margin:8px 0}
+  .ccc-day span{background:#eef2ff;border:1px solid #dbe3ff;color:#334155;border-radius:999px;padding:3px 10px;font-weight:800}
+  .ccc-msg{display:grid;grid-template-columns:32px 1fr;gap:10px;margin:10px 0}
+  .ccc-msg.me{grid-template-columns:1fr 32px}
+  .ccc-msg.me .ccc-bubble{background:#ecfdf5;border-color:#a7f3d0}
+  .ccc-msg.me .ccc-avatar{order:2;background:#d1fae5;color:#065f46}
+  .ccc-bubble{border:1px solid var(--cc-border);background:#fff;border-radius:14px;padding:10px 12px}
+  .ccc-meta{color:var(--cc-muted);font-size:12px;margin-top:4px}
+  .ccc-attachments{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .ccc-thumb{width:120px;height:80px;border:1px solid var(--cc-border);border-radius:10px;overflow:hidden;background:#fff;display:grid;place-items:center}
+  .ccc-thumb img{max-width:100%;max-height:100%}
+  .ccc-file{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--cc-border);border-radius:999px;padding:4px 8px;font-weight:700;background:#fff}
+
+  .ccc-typing{display:flex;align-items:center;gap:6px;color:var(--cc-muted);padding:6px 12px;border-top:1px dashed #e9efff;border-bottom:1px dashed #e9efff;background:#fff}
+  .ccc-dots{width:26px;height:10px;display:inline-grid;grid-auto-flow:column;gap:4px}
+  .ccc-dots i{width:6px;height:6px;background:#94a3b8;border-radius:50%;animation:cc-td 1s infinite ease-in-out}
+  .ccc-dots i:nth-child(2){animation-delay:.15s}
+  .ccc-dots i:nth-child(3){animation-delay:.3s}
+  @keyframes cc-td{0%,80%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+
+  .ccc-compose{padding:10px 12px;background:#fff}
+  .ccc-drop{border:2px dashed #bfe9da;background:#f8fffc;color:#065f46;border-radius:12px;padding:10px;text-align:center;font-weight:800;margin-bottom:8px;cursor:pointer}
+  .ccc-row{display:flex;gap:8px}
+  .ccc-row textarea{flex:1 1 auto;resize:none;min-height:44px;max-height:160px;padding:10px 12px;border:1px solid var(--cc-border);border-radius:12px}
+  .ccc-btn{appearance:none;border:1px solid var(--cc-border);background:#fff;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
+  .ccc-send{border-color:var(--cc-brand);background:var(--cc-brand);color:#fff;box-shadow:0 3px 10px rgba(16,185,129,.25)}
+  .ccc-send:hover{background:var(--cc-brand-700)}
+
+  @media (max-width:560px){
+    .cc-chat{border-radius:0;box-shadow:none}
+    .ccc-log{max-height:58vh}
+  }
+
+.stage-section.has-chat-banner{
+  position: relative;
+  overflow: visible;                 /* let the banner/box overlap */
+  padding-top: 0;                    /* keep your current spacing */
+}
+
+/* the green banner that fills the gap */
+.stage-section.has-chat-banner::before{
+  content: "";
+  position: absolute;
+  left: 16px;                        /* match the section’s inner padding */
+  right: 16px;
+  top: 40px;                         /* where the pill row ends */
+  height: 52px;                      /* how tall you want the green bar */
+  background: linear-gradient(90deg, #10b981, #15c28f 45%, #16dfa3 75%, #12c2b3);
+  border-radius: 14px 14px 0 0;      /* rounded top corners */
+  z-index: 0;                        /* sit behind content */
+}
+
+/* lift the chat on top of the banner and remove its own top radius if desired */
+#chatBox{
+  position: relative;
+  z-index: 1;
+  margin-top: -8px;                  /* slight pull to visually merge */
+}
+
+#chatBox .ccc-head{
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+/* Make the chat as wide as the other panels inside .container */
+.container .cc-chat{
+  max-width: none;     /* remove the 720px cap */
+  width: 100%;         /* fill the column */
+  margin: 0 0 16px;    /* align with panels instead of centering */
+  border-radius: var(--radius);
+}
+
+/* Keep the green header corners nice when it’s full width */
+.container #chatBox .ccc-head{
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.uploaded-panel{
+  margin-top:14px; background:#fff; border:1px solid var(--border);
+  border-radius:12px; padding:12px; box-shadow:0 6px 18px rgba(2,6,23,.04);
+}
+.uploaded-panel .muted{ color:#64748b; font-weight:600; margin-left:6px; }
+
+.up-grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px; margin-top:10px;
+}
+.up-card{
+  border:1px solid var(--border); border-radius:10px; overflow:hidden;
+  background:#fff; display:flex; flex-direction:column;
+}
+.up-preview{
+  aspect-ratio:4/3; display:grid; place-items:center; background:#f8fafc; text-decoration:none; color:#0f172a;
+}
+.up-preview img{ max-width:100%; max-height:100%; display:block; }
+.up-meta{ padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.up-name{ font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.up-actions{ display:flex; gap:6px; }
+.icon-btn{
+  border:1px solid var(--border); background:#fff; border-radius:8px; padding:4px 6px; cursor:pointer;
+}
+.icon-btn:hover{ background:#f3f4f6; }
+
+.status-header {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 10px rgba(2,6,23,0.05);
+}
+
+.status-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.status-info h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.status-info p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Remove unwanted space above the status header */
+.status-header {
+  margin-top: -8px; /* pull it up slightly */
+}
+
+/* Ensure consistent top spacing after the brand/header bar */
+.main-content {
+  padding-top: 12px; /* adjust this for breathing room */
+}
+
+/* Remove default heading margins */
+.status-header h2 {
+  margin: 0;
+}
+
+/* If you used a .container around it */
+.container.status-header {
+  margin-top: 0;
+  padding-top: 8px;
+}
+
+/* Make the whole chat a fixed-height, scrollable module */
+.cc-chat{
+  display:flex;
+  flex-direction:column;
+  min-height:460px;      /* raise/lower as you like */
+  max-height:800px;      /* hard ceiling */
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 6px 18px rgba(2,6,23,.05);
+  height: 1250px; /* ⬅️ Increase this for overall height */
+  overflow:hidden;       /* hide inner scrollbars bleed */
+}
+
+/* Keep the green header visible while messages scroll */
+.ccc-head{
+  position:sticky;
+  top:0;
+  z-index:2;
+  border-bottom:1px solid rgba(0,0,0,.05);
+}
+
+/* Messages area grows and scrolls */
+.ccc-log{
+  flex:1;                /* take remaining height */
+  overflow-y:auto;       /* internal scrolling here */
+  padding:12px 14px;
+  background:#f8fafc;    /* optional: soft background behind bubbles */
+  max-height: none;
+  min-height: 400px; /* ⬅️ Ensures the conversation box is tall by default */
+}
+
+/* If you have an input row inside the chat box */
+.ccc-input{
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  border-top:1px solid rgba(0,0,0,.06);
+  background:#f9fafb;
+  padding:10px;
+}
+
+/* (Optional) nicer scrollbar */
+.ccc-log::-webkit-scrollbar{ width:6px; }
+.ccc-log::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.12); border-radius:4px; }
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 20px 0 10px 0;
+  padding-left: 2px;
+  border-left: 4px solid var(--brand);
+  padding-inline-start: 10px;
+  line-height: 1.4;
+}
+
+:root{
+  --brand:#10b981;             /* your green */
+  --brand-2:#22d3a3;           /* lighter green for accents */
+  --ink:#0f172a;
+  --muted:#475569;
+  --border:#e2e8f0;
+  --bg:#ffffff;
+}
+
+.status-mini{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px 16px;
+  box-shadow:0 6px 18px rgba(2,6,23,.04);
+  max-width:840px;   /* fit your form width; adjust if needed */
+  margin:8px 0 18px 0;
+}
+
+.sm-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.sm-title{
+  margin:0;
+  font-size:16px;
+  font-weight:800;
+  color:var(--ink);
+}
+
+.sm-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+}
+.sm-label{
+  font-weight:700;
+  color:var(--muted);
+  font-size:13px;
+  min-width:64px;
+}
+
+.sm-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#f8fafc;
+  color:#334155;
+  font-weight:700;
+  font-size:13px;
+  white-space:nowrap;
+}
+.sm-current{
+  background:var(--brand);
+  color:#fff;
+  border-color:var(--brand);
+  box-shadow:0 0 0 4px rgba(16,185,129,.12);
+}
+.sm-next{
+  background:#fff;
+}
+
+.sm-desc{
+  margin-top:10px;
+  color:#475569;
+  font-size:13px;
+  line-height:2.5;
+}
+
+.sm-progress{
+  height:6px;
+  background:#eef2f7;
+  border-radius:999px;
+  margin-top:12px;
+  overflow:hidden;
+}
+.sm-progress-fill{
+  height:100%;
+  background:linear-gradient(90deg, var(--brand), var(--brand-2));
+  border-radius:999px;
+  width:0%;
+  transition:width .3s ease;
+}
+
+details[open] summary ~ * {
+  animation: fadeIn .3s ease-in;
+}
+@keyframes fadeIn {
+  from {opacity: 0; transform: translateY(-2px);}
+  to   {opacity: 1; transform: translateY(0);}
+}
+
+:root{
+  --brand:#10b981;          /* your green */
+  --ink:#0f172a;
+  --muted:#475569;
+  --border:#e2e8f0;
+  --panel:#fff;
+}
+
+.fb-tab{
+  position:fixed; top:50%; right:0;
+  transform:translateY(-50%);
+  background:var(--brand); color:#fff;
+  border:none; border-radius:8px 0 0 8px;
+  padding:12px 14px; font-weight:800;
+  box-shadow:0 6px 18px rgba(16,185,129,.25);
+  cursor:pointer; z-index:1100;
+  writing-mode:vertical-rl; text-orientation:mixed;
+  letter-spacing:.2px;
+}
+.fb-tab:focus{ outline:2px solid #fff8; outline-offset:2px; }
+
+.fb-overlay{
+  position:fixed; inset:0; background:rgba(2,6,23,.35);
+  z-index:1090; opacity:0; transition:opacity .2s ease;
+}
+.fb-overlay.is-on{ opacity:1; }
+
+.fb-drawer{
+  position:fixed; top:0; right:0; height:100dvh;
+  width:360px; max-width:92vw;
+  background:var(--panel); border-left:1px solid var(--border);
+  box-shadow: -10px 0 30px rgba(2,6,23,.18);
+  transform:translateX(100%); transition:transform .28s ease;
+  z-index:1110; display:flex; flex-direction:column;
+}
+.fb-drawer.is-open{ transform:translateX(0); }
+
+.fb-head{
+  background:linear-gradient(90deg, var(--brand), #22d3a3);
+  color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;
+}
+.fb-head h3{ margin:0; font-size:16px; font-weight:800; }
+.fb-x{
+  background:transparent; border:none; color:#fff; font-size:24px; line-height:1; cursor:pointer;
+}
+
+.fb-form{ padding:14px 16px; overflow:auto; }
+.fb-label{ display:block; font-weight:700; color:var(--muted); margin:12px 0 6px; }
+.fb-input{
+  width:100%; border:1px solid var(--border); border-radius:10px;
+  padding:10px 12px; font-size:14px; color:var(--ink); background:#fff;
+}
+.fb-input:focus{ outline:2px solid rgba(16,185,129,.25); border-color:var(--brand); }
+
+.fb-stars{ display:flex; gap:6px; }
+.fb-stars button{
+  width:38px; height:38px; border-radius:10px; border:1px solid var(--border);
+  background:#fff; font-size:20px; cursor:pointer; transition:transform .08s;
+}
+.fb-stars button[aria-checked="true"],
+.fb-stars button.is-on{
+  background:var(--brand); color:#fff; border-color:var(--brand);
+  box-shadow:0 0 0 4px rgba(16,185,129,.12);
+}
+.fb-stars button:hover{ transform:translateY(-1px); }
+
+.fb-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+.fb-btn{
+  background:var(--brand); color:#fff; border:1px solid var(--brand);
+  border-radius:10px; padding:10px 14px; font-weight:800; cursor:pointer;
+  box-shadow:0 3px 10px rgba(16,185,129,.25);
+}
+.fb-btn--ghost{
+  background:#fff; color:var(--muted); border:1px solid var(--border); box-shadow:none;
+}
+.fb-btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+.fb-note{ color:#64748b; font-size:12px; margin-top:10px; }
+
+.fb-toast{
+  position:absolute; left:16px; right:16px; bottom:16px;
+  background:#ecfdf5; color:#065f46; border:1px solid #bfe8d6;
+  border-radius:10px; padding:10px 12px; font-weight:700; box-shadow:0 6px 18px rgba(2,6,23,.05);
+}
+@media (max-width:640px){
+  .fb-tab{ top:auto; bottom:24px; right:12px; transform:none; writing-mode:horizontal-tb; border-radius:999px; }
+  .fb-drawer{ width:min(100vw,420px); }
+}
+
+.lockable[readonly],
+.lockable:disabled {
+  background:#f8fafc;
+  color:#64748b;
+  border-color:#e2e8f0;
+  pointer-events:none;            /* ignore clicks */
+}
+
+.lockable[readonly]::placeholder { color:#94a3b8; }
+
+/* optional lock icon */
+.lockable[readonly],
+.lockable:disabled {
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>');
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:18px;
+  padding-right:40px;
+}
+
+/* Visibility: customers can see; staff-only controls hidden unless .admin-mode on body */
+[data-staff-only]{display:none;}
+.admin-mode [data-staff-only]{display:block;}
+
+.ru-block{margin-top:10px;}
+.ru-block-head{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+.ru-block-head h4{margin:0; font-size:14px; font-weight:800; color:#0f172a;}
+.chip{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--border);
+      border-radius:999px; font-size:12px; color:#475569; background:#fff;}
+.chip-mint{background:#ecfdf5; border-color:#bbf7d0; color:#065f46;}
+
+.ru-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px;}
+.ru-card{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#fff;
+         box-shadow:0 6px 18px rgba(2,6,23,.04);}
+.ru-thumb{aspect-ratio:4/3; background:#f8fafc; display:grid; place-items:center;}
+.ru-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+.ru-meta{padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px;}
+.ru-name{font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0f172a;}
+.badge{font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:#475569; background:#fff;}
+
+.ru-docs{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.ru-doc{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--border);
+       border-radius:10px; padding:8px 12px; background:#fff;}
+.ru-doc .doc-left{display:flex; align-items:center; gap:10px;}
+.ru-doc .doc-name{font-weight:700; color:#0f172a; font-size:14px;}
+.ru-doc .doc-meta{font-size:12px; color:#64748b;}
+.btn-link{appearance:none; border:1px solid var(--brand); background:var(--brand); color:#fff; font-weight:800;
+          padding:6px 12px; border-radius:10px; cursor:pointer;}
+
+.ru-notes{display:flex; flex-direction:column; gap:8px;}
+.ru-note{border:1px solid var(--border); border-radius:10px; background:#fff; padding:10px;}
+.ru-note .n-text{color:#0f172a;}
+.ru-note .n-meta{font-size:12px; color:#64748b; margin-top:4px;}
+
+.ru-admin{margin-top:18px;}
+.ru-admin-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; margin-bottom:8px;}
+.label{display:block; font-weight:700; margin-bottom:6px; color:#0f172a;}
+.divider{height:1px; background:var(--border); margin:12px 0;}
+
+.btn{appearance:none; border:1px solid var(--brand); background:var(--brand); color:#fff;
+     font-weight:800; padding:10px 16px; border-radius:10px; box-shadow:0 3px 10px rgba(16,185,129,.25);
+     cursor:pointer;}
+.btn:hover{filter:brightness(1.02);}
+.muted{color:#64748b; margin-left:8px;}
+
+.extra-info-block {
+  margin-top: 20px;
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 3px 10px rgba(2, 6, 23, 0.04);
+}
+
+.extra-title {
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+#extraInfo {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  resize: vertical;
+  background: #fff;
+  color: #0f172a;
+}
+
+#saveExtraInfo {
+  margin-top: 10px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(16,185,129,0.25);
+  transition: background .15s ease;
+}
+
+#saveExtraInfo:hover {
+  filter: brightness(1.1);
+}
+
+.save-status {
+  display: inline-block;
+  margin-left: 12px;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+</style>
+</head>
+<body>
+
+  <!-- Brand bar -->
+  <div class="brandbar">
+    <div class="brandbar-inner">
+      <div class="brand">
+        <div class="mark">C</div>
+        <div>- Returns</div>
+      </div>
+      <div class="brand" style="gap:6px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>
+        <div style="font-weight:700">Fast, fair & friendly</div>
+      </div>
+    </div>
+</div>
+
+<!-- LAYOUT: sidebar + main -->
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Account menu">
+    <div class="sb-head">Account</div>
+
+    <nav class="sb-nav">
+      <button class="sb-item" data-link="/account/orders">
+        <span class="sb-ico">
+          <!-- cart -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </span>
+        <span>Your Orders</span>
+        <span class="chev">▾</span>
+      </button>
+
+      <button class="sb-item" data-link="/account/details">
+        <span class="sb-ico">
+          <!-- doc -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        </span>
+        <span>Your Details</span>
+        <span class="chev">▾</span>
+      </button>
+
+      <button class="sb-item" data-link="/account/membership">
+        <span class="sb-ico">
+          <!-- group -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5 1.34 3.5 3 3.5Z"/><path d="M2 20v-1a4 4 0 0 1 4-4h6"/><path d="M9 11c1.66 0 3-1.57 3-3.5S10.66 4 9 4 6 5.57 6 7.5 7.34 11 9 11Z"/></svg>
+        </span>
+        <span>Membership</span>
+        <span class="chev">▾</span>
+      </button>
+
+      <button class="sb-item" data-link="/account/wishlist">
+        <span class="sb-ico">
+          <!-- heart -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 22l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+        </span>
+        <span>Wishlist</span>
+        <span class="chev">▾</span>
+      </button>
+
+      <!-- Active page -->
+      <button class="sb-item active" data-link="Returns-landing.html">
+        <span class="sb-ico">
+          <!-- shield -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </span>
+        <span>Returns</span>
+        <span class="go">›</span>
+      </button>
+
+      <button class="sb-item" data-link="index.html">
+        <span class="sb-ico">
+          <!-- logout -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+        </span>
+        <span>Log out</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main content (keep your existing container + form inside) -->
+
+<div class="container">
+
+<!-- Customer & Status summary -->
+<div class="status-header">
+  <div class="status-top">
+    <div class="status-info">
+      <h3>Hello, Fred</h3>
+      <p>Return ID 10428</p>
+    </div>
+  </div>
+ <!-- Mini status card -->
+<section id="statusMini" class="status-mini" data-status="In Progress">
+  <div class="sm-head">
+    <h3 class="sm-title">Current Status</h3>
+    <div class="sm-pill sm-current">In Progress</div>
+  </div>
+
+  <div class="sm-desc" id="smDesc">We’re reviewing your request. This usually takes 1–2 business days.</div>
+
+  <div class="sm-row">
+    <div class="sm-label">Up next</div>
+    <div class="sm-pill sm-next">Approved and Awaiting return</div>
+  </div>
+
+  
+
+  <div class="sm-progress" aria-hidden="true">
+    <div class="sm-progress-fill" style="width: 40%"></div>
+  </div>
+</section>
+
+</div>
+  
+  <h1>Return Details and Chat</h1>
+  <form id="returnForm">
+
+  <!-- ========== Fancy Chat Box ========== -->
+<div class="cc-chat" id="chatBox">
+  <div class="ccc-head">
+    <div class="ccc-agent">
+      <div class="ccc-avatar" id="cccAgentAvatar">S</div>
+      <div>
+        <div class="ccc-name" id="cccAgentName">Support</div>
+        <div class="ccc-status" id="cccAgentStatus">Available Monday to Friday. Between 10AM and 5PM. Respone time typically within 1 hour.</div>
+      </div>
+    </div>
+    <div class="ccc-pill">Return chat</div>
+  </div>
+
+  <div class="ccc-log" id="cccLog" aria-live="polite">
+    <!-- Example seed -->
+    <div class="ccc-day"><span>Today</span></div>
+    <div class="ccc-msg">
+      <div class="ccc-avatar">S</div>
+      <div class="ccc-bubble">
+        Hi there! Share details about the issue and we’ll help.
+        <div class="ccc-meta">09:42 • Support</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ccc-typing" id="cccTyping" role="status" aria-live="polite" style="display:none">
+    <div class="ccc-dots"><i></i><i></i><i></i></div> Support is typing…
+  </div>
+
+  <div class="ccc-compose">
+    <div class="ccc-row">
+      <textarea id="cccInput" placeholder="Write a message… (Shift+Enter for newline)"></textarea>
+      <button type="button" class="ccc-btn ccc-send" id="cccSend">Send</button>
+    </div>
+  </div>
+
+  </div>
+</details>
+ </form>
+
+  <!--- Retailer updates --->
+<details class="stage" id="retailerUpdates" open>
+  <summary>
+    <span class="stage-pill">Updates from the Returns Team</span>
+    <span class="stage-pill"<span class="sum-meta" id="ruCount">0 items</span>
+  </summary>
+  <div class="stage-body">
+    <!-- Images the retailer uploaded (condition, received, etc.) -->
+    <div class="ru-block">
+      <div class="ru-block-head">
+        <h4>Photos from retailer</h4>
+        <span class="chip chip-mint" id="ruPhotoCount">0</span>
+      </div>
+      <div class="ru-grid" id="ruPhotoGrid" aria-live="polite"></div>
+    </div>
+
+        <!-- Short status notes added by staff -->
+    <div class="ru-block">
+      <div class="ru-block-head">
+        <h4>Notes from retailer</h4>
+        <span class="chip" id="ruNoteCount">0</span>
+      </div>
+      <div class="ru-notes" id="ruNoteList" aria-live="polite"></div>
+    </div>
+
+   
+    <div class="ru-admin" data-staff-only>
+      <div class="divider"></div>
+      <h4>Add an update (staff)</h4>
+
+      <div class="ru-admin-grid">
+        <div>
+          <label class="label">Add photos</label>
+          <input type="file" id="ruAddPhotos" accept="image/*" multiple />
+        </div>
+        <div>
+          <label class="label">Add documents</label>
+          <input type="file" id="ruAddDocs" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" multiple />
+        </div>
+      </div>
+
+      <label class="label" for="ruAddNote">Add a short note</label>
+      <textarea id="ruAddNote" rows="3" placeholder="e.g. Item received with dent on rear panel…"></textarea>
+
+      <button type="button" class="btn" id="ruSaveBtn">Add to updates</button>
+      <span class="muted" id="ruSaveMsg" aria-live="polite"></span>
+    </div>
+
+    <!-- Documents (postage labels, credit notes, service reports) -->
+    <div class="ru-block">
+      <div class="ru-block-head">
+        <h4>Documents &amp; labels</h4>
+        <span class="chip" id="ruDocCount">0</span>
+      </div>
+      <ul class="ru-docs" id="ruDocList" aria-live="polite"></ul>
+    </div>
+
+  </div>
+<!-- Feedback tab -->
+</details>
+
+  <!--- product details --->
+<details class="stage" open>
+  <summary>
+    <span class="stage-pill">Product Details</span>
+  </summary>
+  <div class="stage-body">
+    
+    <label for="serial">Serial Number</label>
+    <div style="display:flex; gap:8px">
+      <input id="serial" name="serial" value="SN4070-88121" readonly aria-readonly="true" class="lockable" />
+    </div>
+
+    <label for="product" style="margin-top:14px">Product Description</label>
+    <input id="product" name="product" value="GeForce RTX 4070 Ventus 12GB" readonly aria-readonly="true" class="lockable" />
+    <label for="sku">SKU</label>
+
+    <input id="sku" name="sku" value="GPU-4070-MSI" readonly aria-readonly="true" class="lockable" />
+    <label for="invoice">Invoice Number</label>
+
+    <input id="invoice" name="invoice" value="ORD-41235" readonly aria-readonly="true" class="lockable" />
+
+    <label for="date">Date of Purchase</label>
+
+    <input type="date" id="date" name="date" value="2025-04-02" readonly aria-readonly="true" class="lockable" />
+
+    <label for="fault">Describe the fault/problem</label>
+
+    <textarea id="fault" name="fault" readonly aria-readonly="true" class="lockable" ></textarea>
+
+      <h4 class="extra-title">Add any additional information</h4>
+<div class="extra-info-block">
+  <textarea id="extraInfo" placeholder="Add any extra notes or clarification..."></textarea>
+  <button type="button" id="saveExtraInfo" class="btn save">Save</button>
+  <span id="saveStatus" class="save-status" hidden>Saved!</span>
+</div>
+  </div>
+</details>
+
+
+
+
+  </main>
+
+      <!-- attachments -->
+
+<details class="stage" open>
+  <summary>
+    <span class="stage-pill">Your Attachments</span>
+  </summary>
+  <div class="stage-body">
+
+<div class="section-title">If you have any additional attachments to share with us, please upload them here</div>
+<div class="uploaded-panel">
+  <div class="up-head">
+    <span>Uploaded files</span> <span id="upCount" class="muted">(0)</span>
+  </div>
+  <div id="uploadedGrid" class="up-grid"></div>
+</div>
+    <div id="drop" class="dropzone">Drag & drop files here or click to select</div>
+    <div id="fileList" style="margin-top:10px;font-size:14px;color:var(--muted)"></div>
+   
+    <!-- action row under your drop zone -->
+<div class="phone-upload-row">
+  <button type="button" class="btn outline" id="phoneUploadBtn">Upload from your phone</button>
+</div>
+
+
+
+
+<!-- Phone upload sheet (inline) -->
+<section id="phoneSheet" class="qr-sheet" hidden>
+  <div class="qr-left">
+    <div id="qrBox" class="qr-box"></div>
+  </div>
+
+  <div class="qr-right">
+    <h4 class="qr-title">Upload from your phone</h4>
+    <p class="qr-sub">Scan this QR code with your phone to open a secure page and select photos/videos.</p>
+
+    <div class="qr-row">
+      <span class="code-label">Session code</span>
+      <span class="code-pill" id="qrCodeText">—</span>
+    </div>
+
+    <div class="url-group">
+      <input id="qrLink" class="mono url-input" readonly />
+      <button type="button" class="btn copy" id="copyLinkBtn">Copy</button>
+    </div>
+
+    <div class="qr-meta">
+      <span class="muted">Expires in <strong id="qrExpiry">5m</strong></span>
+    </div>
+  </div>
+</section>
+</details>
+
+<button class="fb-tab" id="fbTab" aria-controls="fbDrawer" aria-expanded="false">
+  Feedback
+</button>
+
+<!-- Dim overlay -->
+<div class="fb-overlay" id="fbOverlay" hidden></div>
+
+<!-- Slide-out drawer -->
+<aside class="fb-drawer" id="fbDrawer" aria-hidden="true" role="dialog" aria-label="Send feedback">
+  <header class="fb-head">
+    <h3>Tell us what you think</h3>
+    <button class="fb-x" id="fbClose" aria-label="Close">×</button>
+  </header>
+
+  <form id="fbForm" class="fb-form">
+    <label class="fb-label">How was your experience?</label>
+    <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="Rating">
+      <!-- 1..5 buttons -->
+      <button type="button" data-val="1" aria-checked="false" role="radio">★</button>
+      <button type="button" data-val="2" aria-checked="false" role="radio">★</button>
+      <button type="button" data-val="3" aria-checked="false" role="radio">★</button>
+      <button type="button" data-val="4" aria-checked="false" role="radio">★</button>
+      <button type="button" data-val="5" aria-checked="false" role="radio">★</button>
+    </div>
+
+    <label class="fb-label" for="fbMsg">Anything we should know?</label>
+    <textarea id="fbMsg" class="fb-input" rows="5" placeholder="Share details, suggestions, or bugs…"></textarea>
+
+    <label class="fb-label" for="fbEmail">Email (optional)</label>
+    <input id="fbEmail" class="fb-input" type="email" placeholder="you@example.com" inputmode="email" autocomplete="email">
+
+    <div class="fb-actions">
+      <button type="button" class="fb-btn fb-btn--ghost" id="fbCancel">Cancel</button>
+      <button type="submit" class="fb-btn" id="fbSubmit">Send</button>
+    </div>
+
+    <p class="fb-note">We use your feedback to improve the returns experience. Thank you! 🙌</p>
+  </form>
+
+  <div class="fb-toast" id="fbToast" hidden>Thanks, your feedback was sent.</div>
+</aside>
+
+</div><!-- /layout -->
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+(() => {
+  const btnPhone = document.getElementById('phoneUploadBtn');
+  const modal = document.getElementById('qrModal');
+  const qrBox = document.getElementById('qrBox');
+  const linkInput = document.getElementById('qrLink');
+  const codeText = document.getElementById('qrCodeText');
+  const expiryEl = document.getElementById('qrExpiry');
+  const closeBtn = document.getElementById('closeQrBtn');
+  const copyBtn = document.getElementById('copyLinkBtn');
+
+  let pollTimer = null;
+  let countdownTimer = null;
+  let session = null;
+
+  // --- Demo fallback: make a local upload URL if backend not ready
+  function makeLocalSession() {
+    const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const url = `${location.origin}${location.pathname.replace(/[^/]+$/, '')}phone-upload.html?code=${code}`;
+    const expiresAt = Date.now() + 5*60*1000; // 5 minutes
+    return { code, url, expiresAt };
+  }
+
+  async function createSession() {
+    try {
+      // If you have an API, use it here:
+      // const r = await fetch('/api/upload-sessions', { method:'POST' });
+      // if (!r.ok) throw new Error('create failed');
+      // return await r.json();
+
+      // Fallback demo:
+      return makeLocalSession();
+    } catch(e) {
+      console.error(e);
+      return makeLocalSession();
+    }
+  }
+
+  function openModal() {
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+  }
+  function closeModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+    clearInterval(pollTimer); pollTimer = null;
+    clearInterval(countdownTimer); countdownTimer = null;
+    qrBox.innerHTML = '';
+  }
+
+  function startCountdown(expiresAt){
+    function tick(){
+      const ms = Math.max(0, expiresAt - Date.now());
+      const m = Math.floor(ms/60000), s = Math.floor((ms%60000)/1000);
+      expiryEl.textContent = m ? `${m}m ${s}s` : `${s}s`;
+      if (ms <= 0){ clearInterval(countdownTimer); }
+    }
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  // Poll backend for newly uploaded files for this session code
+  async function pollUploads(code){
+    try{
+      // Real API example:
+      // const r = await fetch(`/api/upload-sessions/${code}/files`);
+      // if (!r.ok) return;
+      // const data = await r.json();
+
+      // Demo: read from localStorage (phone-upload.html will write here)
+      const raw = localStorage.getItem(`phone_upload_${code}`) || '[]';
+      const data = { files: JSON.parse(raw) };
+
+      if (Array.isArray(data.files) && data.files.length){
+        // Integrate: push into your existing "files" array and re-render
+        // CHANGE these two lines if your page uses different names:
+        data.files.forEach(f => {
+          files.push({ name: f.name, size: f.size, url: f.url }); // your file object shape
+        });
+        renderFileList(); // re-use your existing renderer
+
+        // clear phone stash and stop polling
+        localStorage.removeItem(`phone_upload_${code}`);
+        closeModal();
+      }
+    }catch(e){ /* ignore transient errors */ }
+  }
+
+  btnPhone?.addEventListener('click', async () => {
+    session = await createSession();
+
+    // Render QR
+    qrBox.innerHTML = '';
+    new QRCode(qrBox, {
+      text: session.url,
+      width: 140,
+      height: 140,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    linkInput.value = session.url;
+    codeText.textContent = session.code;
+    startCountdown(session.expiresAt);
+    openModal();
+
+    // Start polling every 3s
+    pollTimer = setInterval(() => pollUploads(session.code), 3000);
+  });
+
+  copyBtn?.addEventListener('click', () => {
+    linkInput.select(); linkInput.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    copyBtn.textContent = 'Copied';
+    setTimeout(()=> copyBtn.textContent = 'Copy', 1500);
+  });
+
+  closeBtn?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e)=> { if (e.target === modal) closeModal(); });
+  
+})();
+</script>
+
+<script>
+
+// -------- Stage UI (Steps 1–4) --------
+const stages = [...document.querySelectorAll('.stage')];
+const s1 = stages[0], s2 = stages[1], s3 = stages[2], s4 = stages[3];
+const s1Status = document.getElementById('s1Status');
+const s2Status = document.getElementById('s2Status');
+const s3Status = document.getElementById('s3Status');
+const s4Status = document.getElementById('s4Status');
+
+function setComplete(el){
+  if (el) {
+    el.textContent = 'Complete';
+    el.style.color = '#047857';
+  }
+}
+
+// Allow multiple stages to stay open if you want that behavior
+function openOnly(el){
+  el?.setAttribute('open','');   // open this one, DO NOT close others
+}
+
+// Let native <details> handle toggling; no forced accordion
+document.querySelectorAll('.stage > summary').forEach(sum=>{
+  sum.addEventListener('click', ()=>{ /* no-op */ });
+});
+
+// Step 1: when a choice is made
+const returnTypeEl  = document.getElementById('returnType');
+const returnWarning = document.getElementById('returnWarning');
+
+function updateWarning(){
+  if (!returnWarning) return;
+  returnWarning.style.display = (returnTypeEl?.value === 'other') ? 'block' : 'none';
+}
+
+returnTypeEl?.addEventListener('change', () => {
+  if (returnTypeEl.value){
+    setComplete(s1Status);
+    openOnly(s2);    // this just opens Step 2 (doesn't collapse others)
+  }
+  updateWarning();   // show/hide red terms text
+});
+
+// run once on load to reflect any pre-filled value
+updateWarning();
+
+returnTypeEl?.addEventListener('change', () => {
+  // Mark step as complete if a selection exists
+  if (returnTypeEl.value) {
+    setComplete(s1Status);
+    // Automatically open Step 2 (optional)
+  openOnly(s2);
+  }
+
+(function returnTypeWarningInit(){
+  const sel = document.getElementById('returnType');
+  const warn = document.getElementById('returnWarning');
+  if (!sel || !warn) return;
+
+  function updateWarning() {
+    // Make sure this matches the actual value of your “Something else” option
+    warn.style.display = (sel.value === 'other') ? 'block' : 'none';
+  }
+
+  sel.addEventListener('change', updateWarning);
+  // Also run once on load so it reflects any pre-filled value
+  updateWarning();
+})();
+
+
+// Step 2: complete when Product & SKU are present (manual or auto-filled)
+const productEl = document.getElementById('product');
+const skuEl     = document.getElementById('sku');
+function checkStep2Complete(){
+  if (productEl?.value.trim() && skuEl?.value.trim()){
+    setComplete(s2Status);
+    openOnly(s3);
+  } else if (s2Status){ s2Status.textContent='Waiting'; s2Status.style.color='var(--muted)'; }
+}
+productEl?.addEventListener('input', checkStep2Complete);
+skuEl?.addEventListener('input', checkStep2Complete);
+
+// Step 3: complete when fault text OR at least one file
+const faultEl = document.getElementById('fault');
+let filesCount = 0;
+function updateS3(){
+  const ok = !!faultEl?.value.trim() || filesCount > 0;
+  if (ok){ setComplete(s3Status); openOnly(s4); }
+  else if (s3Status){ s3Status.textContent='Required'; s3Status.style.color='var(--muted)'; }
+}
+faultEl?.addEventListener('input', updateS3);
+
+// hook into your existing renderFileList() to update filesCount
+const _renderFileList = window.renderFileList;
+window.renderFileList = function(){
+  if (typeof _renderFileList === 'function') _renderFileList();
+  try { filesCount = Array.isArray(files) ? files.length : 0; } catch { filesCount = 0; }
+  updateS3();
+};
+
+// Step 4: complete when Name + valid Email
+const nameEl  = document.getElementById('name');
+const emailEl = document.getElementById('email');
+const validEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v||'');
+function updateS4(){
+  const ok = !!nameEl?.value.trim() && validEmail(emailEl?.value);
+  if (ok){ setComplete(s4Status); }
+  else if (s4Status){ s4Status.textContent='Required'; s4Status.style.color='var(--muted)'; }
+}
+nameEl?.addEventListener('input', updateS4);
+emailEl?.addEventListener('input', updateS4);
+
+});
+
+// Sidebar navigation (optional)
+document.querySelectorAll('.sb-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const href = btn.dataset.link;
+    if (href) window.location.href = href; // replace with router push if needed
+  });
+}); // <-- this closes the forEach
+
+document.addEventListener('DOMContentLoaded', () => {
+  const returnsBtn = document.querySelector('.sb-returns');
+  if (returnsBtn) {
+    returnsBtn.addEventListener('click', () => {
+      window.location.href = 'Returns-landing.html';
+    });
+  }
+});
+
+(() => {
+  const log = document.getElementById('cccLog');
+  const typing = document.getElementById('cccTyping');
+  const input = document.getElementById('cccInput');
+  const sendBtn = document.getElementById('cccSend');
+  const drop = document.getElementById('cccDrop');
+
+  // Public-ish helpers (you can call these from your page scripts)
+  window.ccChat = {
+    appendMessage,
+    showTyping,
+    setAgent
+  };
+
+  function setAgent(name='Support', avatar='S', status='Online'){
+    document.getElementById('cccAgentName').textContent = name;
+    document.getElementById('cccAgentAvatar').textContent = avatar?.[0] || 'S';
+    document.getElementById('cccAgentStatus').textContent = status;
+  }
+
+  function showTyping(show=true){
+    typing.style.display = show ? 'flex' : 'none';
+    if(show) log.scrollTop = log.scrollHeight;
+  }
+
+  function nowTime(){
+    const d=new Date(); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+  function esc(s){return s.replace(/[&<>"]/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m]));}
+
+  function appendMessage({side='agent', name='Support', text='', files=[]}){
+    const me = side==='me';
+    const row = document.createElement('div');
+    row.className = 'ccc-msg' + (me?' me':'');
+    const avatar = (me ? 'You' : name)[0] || 'S';
+
+    // attachments (images get thumbnail, others get file pill)
+    const atts = files && files.length ? `
+      <div class="ccc-attachments">
+        ${files.map(f => f.type?.startsWith('image/')
+          ? `<span class="ccc-thumb"><img src="${esc(f.url || '')}" alt=""></span>`
+          : `<span class="ccc-file">${esc(f.name || 'file')}</span>`
+        ).join('')}
+      </div>` : '';
+
+    row.innerHTML = me
+      ? `<div class="ccc-bubble">${esc(text)}${atts}<div class="ccc-meta">${nowTime()} • You</div></div><div class="ccc-avatar">Y</div>`
+      : `<div class="ccc-avatar">${esc(avatar)}</div><div class="ccc-bubble">${esc(text)}${atts}<div class="ccc-meta">${nowTime()} • ${esc(name)}</div></div>`;
+
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // Send (Enter to send, Shift+Enter for newline)
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }
+  });
+
+  // Auto-size textarea
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+  });
+
+sendBtn.addEventListener('click', (e)=>{
+  e.preventDefault();     // ✅ Stop page navigation or form submission
+  e.stopPropagation();
+
+  const text = input.value.trim();
+  if(!text) return;
+
+  // Add your own message
+  appendMessage({side:'me', name:'You', text});
+  input.value='';
+  input.dispatchEvent(new Event('input'));
+
+  // Optional demo reply
+  showTyping(true);
+  setTimeout(()=>{
+    showTyping(false);
+    appendMessage({side:'agent', name:'Support', text:'Thanks! We’re reviewing and will update you shortly.'});
+  }, 900);
+});
+
+  // Drag & drop / click to attach
+  drop.addEventListener('click', ()=>{
+    const i=document.createElement('input'); i.type='file'; i.multiple=true; i.accept='image/*,video/*,application/pdf';
+    i.onchange=()=> handleFiles(i.files); i.click();
+  });
+  ;['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.style.borderColor= '#16dfa3';}));
+  ;['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.style.borderColor= '#bfe9da';}));
+  drop.addEventListener('drop', (e)=> handleFiles(e.dataTransfer.files));
+
+  function handleFiles(list){
+    const files = [...list].map(f=>{
+      const obj = { name:f.name, type:f.type };
+      if(f.type.startsWith('image/')) obj.url = URL.createObjectURL(f);
+      return obj;
+    });
+    appendMessage({side:'me', name:'You', text:'Attached files:', files});
+    // revoke image object URLs a bit later (after thumbnails paint)
+    setTimeout(()=> files.forEach(f=> f.url && URL.revokeObjectURL(f.url)), 2000);
+  }
+})();
+
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const chatBox   = document.getElementById('chatBox');          // root of the chat UI
+  const input     = document.getElementById('cccInput');          // chat textarea
+  const sendBtn   = document.getElementById('cccSend');           // chat Send button
+  const returnForm= document.getElementById('returnForm');        // your main form
+
+  // 1) Force every button in the chat to NOT be a submit button
+  if (chatBox) {
+    chatBox.querySelectorAll('button').forEach(btn => btn.type = 'button');
+  }
+
+  // 2) Prevent Enter (without Shift) in the chat from submitting the page,
+  //    and instead send the chat message.
+  if (input && sendBtn) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+  }
+
+  // 3) If your form's submit listener is still firing, ignore submits
+  //    that originate from a button inside the chat box.
+  if (returnForm) {
+    returnForm.addEventListener('submit', (e) => {
+      // Modern browsers: e.submitter is the button that triggered submit
+      const sub = e.submitter;
+      if (sub && chatBox && sub.closest('#chatBox')) {
+        e.preventDefault();    // <-- block form submit from chat
+        return;
+      }
+
+      // Fallback guard (in case something else calls form.submit())
+      // If the currently focused element is inside chat, block it.
+      const active = document.activeElement;
+      if (active && chatBox && chatBox.contains(active)) {
+        e.preventDefault();
+        return;
+      }
+
+      // Otherwise let your normal form submission handler run
+      // (your existing code will continue below this listener)
+    }, true); // useCapture=true: catch early before other handlers
+  }
+
+  // 4) Chat send logic (safe; won’t navigate)
+  function nowTime(){ const d=new Date(); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+  function esc(s){ return s.replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function appendMessage({side='me', name='You', text=''}) {
+    const log = document.getElementById('cccLog');
+    if (!log) return;
+    const row = document.createElement('div');
+    row.className = 'ccc-msg' + (side === 'me' ? ' me' : '');
+    row.innerHTML = side === 'me'
+      ? `<div class="ccc-bubble">${esc(text)}<div class="ccc-meta">${nowTime()} • You</div></div><div class="ccc-avatar">Y</div>`
+      : `<div class="ccc-avatar">${esc(name[0]||'S')}</div><div class="ccc-bubble">${esc(text)}<div class="ccc-meta">${nowTime()} • ${esc(name)}</div></div>`;
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  if (sendBtn && input) {
+    sendBtn.addEventListener('click', (e) => {
+      e.preventDefault(); // extra safety
+      e.stopPropagation();
+      const text = input.value.trim();
+      if (!text) return;
+      appendMessage({ side: 'me', text });
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+      // fake agent reply (optional)
+      // setTimeout(()=>appendMessage({side:'agent', name:'Support', text:'Thanks! We’ll review and update you shortly.'}), 900);
+    });
+  }
+});
+</script>
+
+<script>
+(function(){
+  const grid    = document.getElementById('uploadedGrid');
+  const countEl = document.getElementById('upCount');
+  // Global store you can reuse elsewhere:
+  const STORE   = (window.UPLOADS = window.UPLOADS || []); // [{name,type,size,url,objectURL}]
+
+  // Render list
+  function render(){
+    if(!grid) return;
+    grid.innerHTML = '';
+    STORE.forEach((f,i)=>{
+      const isImg = (f.type||'').startsWith('image/');
+      const card = document.createElement('div');
+      card.className = 'up-card';
+      card.innerHTML = `
+        <a class="up-preview" href="${f.url}" target="_blank" rel="noopener">
+          ${isImg ? `<img src="${f.url}" alt="">` : `<span style="font-weight:900">${(f.ext || f.type || 'FILE').split('/').pop().toUpperCase()}</span>`}
+        </a>
+        <div class="up-meta">
+          <div class="up-name" title="${f.name || ''}">${f.name || ''}</div>
+          <div class="up-actions">
+            <button class="icon-btn" data-i="${i}" data-act="download" title="Download">⭳</button>
+            <button class="icon-btn" data-i="${i}" data-act="remove"   title="Remove">✕</button>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+    if(countEl) countEl.textContent = `(${STORE.length})`;
+  }
+
+  // Actions: remove / download
+  grid?.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.icon-btn'); if(!btn) return;
+    const i   = +btn.dataset.i; const act = btn.dataset.act; const f = STORE[i]; if(!f) return;
+    if(act === 'remove'){
+      try{ if(f.objectURL) URL.revokeObjectURL(f.url); }catch{}
+      STORE.splice(i,1);
+      render();
+    } else if(act === 'download'){
+      const a = document.createElement('a');
+      a.href = f.url; a.download = f.name || 'file'; document.body.appendChild(a); a.click(); a.remove();
+    }
+  });
+
+  // Hook into your drop zone (click & drag-drop)
+const drop = document.getElementById('drop')               // add this first
+        || document.getElementById('attachDrop')
+        || document.getElementById('dropZone')
+        || document.querySelector('[data-drop="attachments"]');
+  if(drop){
+    drop.addEventListener('click', ()=>{
+      const i=document.createElement('input'); i.type='file'; i.multiple=true;
+      i.accept='image/*,video/*,application/pdf';
+      i.onchange=()=> addFiles(i.files);
+      i.click();
+    });
+    ;['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); }));
+    drop.addEventListener('drop', (e)=>{ e.preventDefault(); addFiles(e.dataTransfer.files); });
+  }
+
+  // Add files to store and render
+  function addFiles(list){
+    [...list].forEach(file=>{
+      const url = URL.createObjectURL(file);
+      STORE.push({
+        name:file.name, type:file.type, size:file.size, url, objectURL:true
+      });
+    });
+    render();
+  }
+
+  // Optional: seed from server (set window.INIT_ATTACHMENTS before this script)
+  if(Array.isArray(window.INIT_ATTACHMENTS)){
+    window.INIT_ATTACHMENTS.forEach(f=> STORE.push(f)); // {name,type,url}
+  }
+
+  render();
+})();
+
+</script>
+
+<script>
+  window.INIT_ATTACHMENTS = [
+    { name: 'invoice.pdf', type: 'application/pdf', url: '/files/rma10428/invoice.pdf' },
+    { name: 'artifact.jpg', type: 'image/jpeg', url: '/files/rma10428/artifact.jpg' }
+  ];
+  
+  (function(){
+  // Reuse existing references if you already have them:
+  const drop   = document.getElementById('attachDrop') 
+              || document.getElementById('dropZone') 
+              || document.querySelector('[data-drop="attachments"]');
+
+  function addFiles(list){
+    window.UPLOADS = window.UPLOADS || [];
+    const STORE = window.UPLOADS;
+    const grid  = document.getElementById('uploadedGrid');
+    const count = document.getElementById('upCount');
+
+    [...list].forEach(file=>{
+      const url = URL.createObjectURL(file);
+      STORE.push({ name:file.name, type:file.type, size:file.size, url, objectURL:true });
+    });
+
+    // render
+    if (grid) {
+      grid.innerHTML = STORE.map((f,i)=>{
+        const isImg = (f.type||'').startsWith('image/');
+        return `
+          <div class="up-card">
+            <a class="up-preview" href="${f.url}" target="_blank" rel="noopener">
+              ${isImg ? `<img src="${f.url}" alt="">` : `<span style="font-weight:900">${(f.type||'FILE').split('/').pop().toUpperCase()}</span>`}
+            </a>
+            <div class="up-meta">
+              <div class="up-name" title="${f.name}">${f.name}</div>
+              <div class="up-actions">
+                <button class="icon-btn" data-i="${i}" data-act="download">⭳</button>
+                <button class="icon-btn" data-i="${i}" data-act="remove">✕</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    if (count) count.textContent = `(${STORE.length})`;
+  }
+
+  // Hook file input(s)
+  document.querySelectorAll('input[type="file"][data-attachments], #attachmentsInput')
+    .forEach(input=>{
+      input.addEventListener('change', ()=> addFiles(input.files));
+    });
+
+  // Hook dropzone
+  if (drop){
+    ;['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); }));
+    drop.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      addFiles(e.dataTransfer.files);
+      // Clear any text/links your old code might have added under the dropzone:
+      drop.querySelectorAll('a, li, .file-pill, .file-name').forEach(n=> n.remove());
+    });
+    // Clicking the drop opens a file picker that also routes to addFiles
+    drop.addEventListener('click', ()=>{
+      const i=document.createElement('input'); i.type='file'; i.multiple=true;
+      i.accept='image/*,video/*,application/pdf';
+      i.onchange=()=> addFiles(i.files);
+      i.click();
+    });
+  }
+
+  // Handle remove/download actions
+  document.getElementById('uploadedGrid')?.addEventListener('click',(e)=>{
+    const btn = e.target.closest('.icon-btn'); if(!btn) return;
+    const i   = +btn.dataset.i; const act = btn.dataset.act;
+    const STORE = window.UPLOADS||[];
+    const f = STORE[i]; if(!f) return;
+
+    if (act==='remove'){ try{ f.objectURL && URL.revokeObjectURL(f.url); }catch{} STORE.splice(i,1); addFiles([]); }
+    if (act==='download'){ const a=document.createElement('a'); a.href=f.url; a.download=f.name||'file'; document.body.appendChild(a); a.click(); a.remove(); }
+  });
+})();
+
+(function(){
+  const rail = document.getElementById('statusRail');
+  const wrap = document.getElementById('caseSummary');
+  if(!rail || !wrap) return;
+
+  const qs = new URLSearchParams(location.search);
+  const name   = qs.get('name')   || wrap.dataset.customer || 'Customer';
+  const status = qs.get('status') || wrap.dataset.status   || 'New';
+  const rma    = qs.get('rma')    || wrap.dataset.rma      || 'RMA-10428';
+
+  const nameEl = document.getElementById('csName'); if(nameEl) nameEl.textContent = name;
+  const rmaEl  = document.getElementById('csRma');  if(rmaEl)  rmaEl.textContent  = rma;
+
+  const steps = [...rail.querySelectorAll('li')].map(li => li.dataset.step);
+  const idx = steps.indexOf(status);
+
+  [...rail.children].forEach((li,i)=>{
+    li.classList.toggle('past',    i < idx);
+    li.classList.toggle('current', i === idx);
+    li.classList.toggle('future',  i > idx);
+  });
+})();
+
+
+// 1) Define the ordered flow (add/remove freely)
+const STATUS_FLOW = [
+  "New",
+  "In Progress",
+  "Approved and Awaiting return",
+  "Received",
+  "Processing",
+  "Completed"
+];
+
+// 2) Explanations (fallback provided if not found)
+const STATUS_DESC = {
+  "New": "We’ve received your request and queued it for review.",
+  "In Progress": "We’re reviewing your request. This usually takes 1–2 business days.",
+  "Approved and Awaiting return": "Your return is approved. Please return the product using the instructions provided.",
+  "Received": "We’ve received your item and are performing checks.",
+  "Processing": "We’re processing the outcome for your return.",
+  "Completed": "Your return is complete. Check your email for the final outcome."
+};
+
+// Helper to update the widget
+function setMiniStatus(container, currentStatus){
+  const currentEl = container.querySelector('.sm-current');
+  const nextEl    = container.querySelector('.sm-next');
+  const descEl    = container.querySelector('.sm-desc');
+  const barFill   = container.querySelector('.sm-progress-fill');
+
+  // Find current / next
+  const idx = STATUS_FLOW.findIndex(s => s.toLowerCase() === String(currentStatus).toLowerCase());
+  const current = idx >= 0 ? STATUS_FLOW[idx] : STATUS_FLOW[0];
+  const next = STATUS_FLOW[idx+1]; // undefined if last
+
+  // Update pills
+  currentEl.textContent = current;
+  if (next){
+    nextEl.textContent = next;
+    nextEl.style.display = '';
+  }else{
+    nextEl.textContent = "—";
+    nextEl.style.display = 'none'; // hide if none
+  }
+
+  // Description
+  descEl.textContent = STATUS_DESC[current] || "Your return is moving through our process.";
+
+  // Progress (0..100)
+  const progress = Math.max(0, Math.min(100, (idx/(STATUS_FLOW.length-1))*100));
+  if (barFill) barFill.style.width = `${progress}%`;
+}
+
+// Auto-init on load (reads data-status)
+document.addEventListener('DOMContentLoaded', () => {
+  const box = document.getElementById('statusMini');
+  if (!box) return;
+  const status = box.getAttribute('data-status') || 'New';
+  setMiniStatus(box, status);
+
+  // Example: to update dynamically later:
+  // setMiniStatus(box, 'Processing');
+});
+
+(() => {
+  const tab     = document.getElementById('fbTab');
+  const drawer  = document.getElementById('fbDrawer');
+  const overlay = document.getElementById('fbOverlay');
+  const closeBt = document.getElementById('fbClose');
+  const cancel  = document.getElementById('fbCancel');
+  const form    = document.getElementById('fbForm');
+  const starsEl = document.getElementById('fbStars');
+  const msg     = document.getElementById('fbMsg');
+  const email   = document.getElementById('fbEmail');
+  const toast   = document.getElementById('fbToast');
+
+  let rating = 0;
+
+  function openDrawer(){
+    drawer.classList.add('is-open');
+    overlay.hidden = false;
+    overlay.classList.add('is-on');
+    drawer.setAttribute('aria-hidden','false');
+    tab.setAttribute('aria-expanded','true');
+    setTimeout(()=> msg.focus(), 150);
+  }
+  function closeDrawer(){
+    drawer.classList.remove('is-open');
+    overlay.classList.remove('is-on');
+    drawer.setAttribute('aria-hidden','true');
+    tab.setAttribute('aria-expanded','false');
+    setTimeout(()=> overlay.hidden = true, 200);
+  }
+
+  tab.addEventListener('click', openDrawer);
+  overlay.addEventListener('click', closeDrawer);
+  closeBt.addEventListener('click', closeDrawer);
+  cancel.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && drawer.classList.contains('is-open')) closeDrawer();
+  });
+
+  // Stars
+  starsEl.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      rating = +btn.dataset.val;
+      starsEl.querySelectorAll('button').forEach(b=>{
+        const v = +b.dataset.val;
+        const on = v <= rating;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-checked', on && v === rating ? 'true':'false');
+      });
+    });
+  });
+
+  // Submit (wire to your backend)
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const payload = {
+      rating,
+      message: msg.value.trim(),
+      email: email.value.trim(),
+      path: location.pathname,
+      ts: new Date().toISOString()
+    };
+
+    // TODO: replace with real POST
+    console.log('Feedback payload:', payload);
+
+    // little toast
+    toast.hidden = false;
+    setTimeout(()=> toast.hidden = true, 1800);
+
+    // clear + close
+    form.reset(); rating = 0;
+    starsEl.querySelectorAll('button').forEach(b=>{
+      b.classList.remove('is-on'); b.setAttribute('aria-checked','false');
+    });
+    setTimeout(closeDrawer, 800);
+  });
+})();
+
+document.getElementById('fault').value = "My graphics card no longer works";
+
+/** Example data the retailer has added (replace with your backend payload) */
+let RETAILER_UPDATES = {
+  photos: [
+    { id:'p1', url:'https://picsum.photos/seed/cond1/800/600', name:'Unit on arrival', by:'Tech • Sam', at:'2025-08-12T10:20:00Z' },
+    { id:'p2', url:'https://picsum.photos/seed/cond2/800/600', name:'Rear dent',       by:'Tech • Sam', at:'2025-08-12T10:22:00Z' },
+  ],
+  docs: [
+    { id:'d1', name:'Return Postage label.pdf',   url:'#', kind:'Label',  by:'Ops • Mia', at:'2025-08-12T11:00:00Z' },
+    { id:'d2', name:'Credit note CN-514', url:'#', kind:'Credit', by:'Accounts',  at:'2025-08-14T16:40:00Z' },
+    { id:'d3', name:'Service report.pdf', url:'#', kind:'Report', by:'Vendor',    at:'2025-08-18T09:05:00Z' },
+  ],
+  notes: [
+    { id:'n1', text:'Unit inspected; damage documented and photos uploaded. Awaiting customer confirmation.', by:'Tech • Sam', at:'2025-08-12T10:35:00Z' }
+  ]
+};
+
+const fmt = d => new Date(d).toLocaleString([], {year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+
+function renderRetailerUpdates(data){
+  const pG = document.getElementById('ruPhotoGrid');
+  const dL = document.getElementById('ruDocList');
+  const nL = document.getElementById('ruNoteList');
+
+  // counts
+  document.getElementById('ruPhotoCount').textContent = (data.photos?.length || 0);
+  document.getElementById('ruDocCount').textContent   = (data.docs?.length   || 0);
+  document.getElementById('ruNoteCount').textContent  = (data.notes?.length  || 0);
+  document.getElementById('ruCount').textContent      =
+    `${(data.photos?.length||0) + (data.docs?.length||0) + (data.notes?.length||0)} items`;
+
+  // photos
+  pG.innerHTML = (data.photos||[]).map(p => `
+    <a class="ru-card" href="${p.url}" target="_blank" rel="noopener">
+      <div class="ru-thumb">
+        <img src="${p.url}" alt="${p.name || 'Retailer photo'}">
+      </div>
+      <div class="ru-meta">
+        <div class="ru-name" title="${p.name || ''}">${p.name || 'Photo'}</div>
+        <span class="badge">${fmt(p.at)}</span>
+      </div>
+    </a>
+  `).join('') || `<div class="muted">No photos added yet.</div>`;
+
+  // documents
+  dL.innerHTML = (data.docs||[]).map(d => `
+    <li class="ru-doc">
+      <div class="doc-left">
+        <span class="badge">${d.kind||'Doc'}</span>
+        <div>
+          <div class="doc-name">${d.name}</div>
+          <div class="doc-meta">${fmt(d.at)} • ${d.by || ''}</div>
+        </div>
+      </div>
+      <a class="btn-link" href="${d.url}" download>Download</a>
+    </li>
+  `).join('') || `<li class="muted">No documents yet.</li>`;
+
+  // notes
+  nL.innerHTML = (data.notes||[]).map(n => `
+    <div class="ru-note">
+      <div class="n-text">${n.text}</div>
+      <div class="n-meta">${fmt(n.at)} • ${n.by || ''}</div>
+    </div>
+  `).join('') || `<div class="muted">No notes yet.</div>`;
+}
+
+renderRetailerUpdates(RETAILER_UPDATES);
+
+/** OPTIONAL: staff-only “Add” (demo uses localStorage; wire to API in prod) */
+if (new URLSearchParams(location.search).get('staff') === '1') document.body.classList.add('admin-mode');
+
+(function adminHook(){
+  if (!document.body.classList.contains('admin-mode')) return;
+  const saveBtn = document.getElementById('ruSaveBtn');
+  const noteEl  = document.getElementById('ruAddNote');
+  const msgEl   = document.getElementById('ruSaveMsg');
+
+  saveBtn?.addEventListener('click', ()=>{
+    const note = (noteEl.value||'').trim();
+    if (note) {
+      RETAILER_UPDATES.notes.push({ id:crypto.randomUUID(), text:note, by:'Staff', at:new Date().toISOString() });
+      noteEl.value = '';
+    }
+    // In a real app, upload files, get URLs back, then push to photos/docs arrays.
+    // After saving:
+    renderRetailerUpdates(RETAILER_UPDATES);
+    msgEl.textContent = 'Added.';
+    setTimeout(()=> msgEl.textContent = '', 1200);
+  });
+})();
+
+document.getElementById("saveExtraInfo").addEventListener("click", () => {
+  const info = document.getElementById("extraInfo").value.trim();
+  const status = document.getElementById("saveStatus");
+
+  if (!info) {
+    status.textContent = "Please enter something before saving.";
+    status.style.color = "#b91c1c";
+    status.hidden = false;
+    return;
+  }
+
+  // simulate save
+  status.textContent = "Saved!";
+  status.style.color = "#16a34a";
+  status.hidden = false;
+
+  // Here you can hook into your real save logic (API / localStorage)
+  console.log("Extra info saved:", info);
+
+  setTimeout(() => status.hidden = true, 2500);
+});
+
+</script>
+
+</body>
+</html>
