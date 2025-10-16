@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C- Returns | Warranty & Return</title>
+<style>
+  /* ===== Theme ===== */
+  :root{
+  --brand:#10b981; --brand-600:#059669; --brand-700:#047857;
+  --bg:#f5f7fb; --panel:#ffffff; --border:#e5e9f2; --text:#0f172a; --muted:#64748b;
+  --radius:14px; --shadow:0 6px 18px rgba(9,16,35,.08);
+  --font-main: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 var(--font-main)}
+
+.brandbar{
+  background:linear-gradient(90deg, var(--brand) 0%, #15c28f 35%, #16dfa3 65%, #12c2b3 100%);
+  color:#fff; box-shadow:var(--shadow);
+}
+.brandbar-inner{padding:12px 16px; display:flex; justify-content:space-between; align-items:center}
+.brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px}
+.brand .mark{
+  width:28px; height:28px; border-radius:6px; background:#fff; color:var(--brand);
+  display:flex; align-items:center; justify-content:center; font-weight:900;
+}
+
+/* Modal base (reuse if you already have similar) */
+.modal{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;padding:20px;z-index:1000}
+.modal.open{display:flex}
+.modal-card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);width:min(680px,92vw);max-height:88vh;display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+.modal-head h3{margin:0;font-size:18px}
+.modal-x{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
+.modal-sub{color:#64748b;padding:0 16px 8px}
+.items-scroll{padding:8px 16px 4px;overflow:auto;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;max-height:54vh}
+.item-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.item-row:last-child{border-bottom:0}
+.item-title{font-weight:800}
+.item-meta{color:#64748b;font-size:13px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #a7f3d0;background:#ecfdf5;color:#047857;font-weight:800;font-size:12px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 16px}
+.btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;font-weight:800;cursor:pointer}
+.btn.primary{border-color:var(--brand);background:var(--brand);color:#fff;box-shadow:0 3px 10px rgba(16,185,129,.25)}
+.btn.primary:hover{background:var(--brand-700)}
+
+  /* ===== Layout (sidebar + main) ===== */
+  .layout{
+    max-width:1200px;margin:22px auto;display:grid;grid-template-columns:260px 1fr;gap:18px;padding:0 16px;
+  }
+  .sidebar{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:12px;align-self:start;
+  }
+  .sb-head{font-weight:800;color:var(--text);padding:8px 10px 12px;border-bottom:1px solid var(--border)}
+  .sb-nav{display:flex;flex-direction:column;padding:8px 4px}
+  .sb-item{
+    appearance:none;border:1px solid var(--border);background:#fff;color:var(--text);
+    border-radius:12px;padding:10px 12px;margin:6px 6px;display:grid;grid-template-columns:22px 1fr auto;
+    gap:10px;align-items:center;cursor:pointer;font-weight:700;box-shadow:0 2px 6px rgba(2,6,23,.05);
+    transition:border .15s,box-shadow .15s,transform .05s;
+  }
+  .sb-item:hover{border-color:#cfe9df;box-shadow:0 4px 12px rgba(16,185,129,.12)}
+  .sb-item:active{transform:translateY(1px)}
+  .sb-item.active{background:linear-gradient(180deg,#ffffff,#f6fff9);border-color:#b6ebd4;box-shadow:0 4px 12px rgba(16,185,129,.16)}
+  .sb-item .go{color:var(--brand);font-size:18px;font-weight:900}
+  .sb-ico{display:inline-grid;place-items:center;color:var(--brand-700)}
+
+  /* ===== Main card ===== */
+  .card{
+    background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;
+  }
+  h1{margin:0 0 8px;font-size:24px;letter-spacing:.2px}
+  .tabs{display:flex;gap:28px;border-bottom:1px solid var(--border);padding:8px 4px 0;margin:8px 0 14px}
+  .tab{position:relative;padding:10px 0;font-weight:800;color:#1f2937;cursor:pointer;opacity:.9}
+  .tab.active{color:#10b981}
+  .tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:#10b981;border-radius:3px}
+
+  .row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 18px}
+  .muted{color:var(--muted);font-weight:400}
+  .filter{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+
+  .center-wrap{display:grid;place-items:center;padding:24px 8px}
+  .headline{font-size:28px;font-weight:900;margin:6px 0}
+  .sub{color:var(--muted);max-width:520px;text-align:center;margin:0 auto 14px}
+
+  /* Search bar */
+  .searchrow{display:grid;grid-template-columns:180px 1fr 44px;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;max-width:620px;margin:8px auto}
+  .searchrow select{appearance:none;border:0;border-right:1px solid var(--border);padding:12px 14px;background:#fff;font-weight:700}
+  .searchrow input{border:0;padding:12px 14px;outline:none}
+  .searchrow .clear{border:0;background:#fff;border-left:1px solid var(--border);cursor:pointer;font-size:18px}
+  .actions{display:grid;place-items:center;margin-top:14px}
+  .btn{
+    appearance:none;border:0;border-radius:10px;background:#10b981;color:#fff;font-weight:800;
+    padding:10px 20px;cursor:pointer;box-shadow:0 6px 18px rgba(11,99,214,.26);transition:transform .05s;
+  }
+  .btn:active{transform:translateY(1px)}
+
+  /* Responsive */
+  @media (max-width:980px){ .layout{grid-template-columns:1fr} .sidebar{order:-1} }
+
+.tab { background:none; border:0; }
+.tabpanel[hidden]{ display:none !important; }
+
+.empty{ padding:36px 0 20px; text-align:left; }
+.empty-title{ font-weight:900; color:#111827; margin-bottom:6px; }
+.empty-sub{ color:var(--muted); margin:0; }
+
+.rt-wrap { margin-top: 10px; }
+.rt { width:100%; border-collapse: collapse; background:#fff; border:1px solid var(--border); border-radius: 12px; overflow:hidden; }
+.rt thead th { background:#f8fafc; color:#0f172a; font-weight:600; text-align:center; padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+.rt tbody td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; text-align:center; font-size:14px; }
+.rt tbody tr:last-child td { border-bottom: none; }
+.rt .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:14px; }
+.rt .pill { display:inline-block; padding:4px 10px; border-radius:999px; font-weight:800; font-size:12px; }
+.p-new { background:#ecfdf5; color:#065f46; border:1px solid #bfe8d6; }
+.p-prog{ background:#eef2ff; color:#3730a3; border:1px solid #c7cff7; }
+.p-closed{ background:#fef2f2; color:#991b1b; border:1px solid #f5c2c2; }
+.rt .btn-link {
+  appearance: none;
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: #fff;                     /* white text */
+  font-weight: 800;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(16,185,129,.25);
+  transition: background .15s, transform .05s;
+}
+
+/* Consistent pill size + centering */
+.rt td[data-col="Status"]{
+  text-align:center;         /* center the pill in the cell */
+  width:140px;               /* optional: consistent status column */
+}
+
+.rt .pill{
+  display:inline-flex;       /* center the label */
+  align-items:center;
+  justify-content:center;
+  min-width:100px;           /* 👈 make all pills same width */
+  height:30px;               /* 👈 same height */
+  padding:0 12px;            /* side breathing room */
+  border-radius:999px;
+  white-space:nowrap;        /* never wrap to 2 lines */
+  font-size:13px;            /* smaller, cleaner */
+  font-weight:600;           /* not shouty */
+  border:1px solid var(--border, #e5e7eb); /* base border; themed below */
+}
+
+.rt .btn-link:hover {
+  background: var(--brand-700);    /* slightly darker green */
+}
+
+.rt .btn-link:active {
+  transform: translateY(1px);
+}
+
+/* Responsive: stack some columns on small screens */
+@media (max-width: 720px){
+  .rt thead { display:none; }
+  .rt, .rt tbody, .rt tr, .rt td { display:block; width:100%; }
+  .rt tr { border-bottom:1px solid var(--border); padding:10px 0; }
+  .rt tbody td { border:0; padding:8px 14px; }
+  .rt td[data-col]::before { content: attr(data-col) ": "; font-weight:800; color:#334155; }
+  .rt .actions { margin-top:8px; }
+}
+
+.btn-return {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(16,185,129,.25);
+  transition: background .15s, transform .05s;
+}
+.btn-return:hover {
+  background: var(--brand-700);
+}
+.btn-return:active {
+  transform: translateY(1px);
+}
+
+/* Overlay for fake search loading */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.loader-box {
+  background: white;
+  border-radius: 12px;
+  padding: 24px 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  font-weight: 600;
+  color: #333;
+}
+
+.loader-box p {
+  margin-top: 10px;
+  color: #333;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e0e0e0;
+  border-top: 3px solid #13c29a;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.order-search-box {
+  border: 2px solid #e0e0e0; /* light gray border */
+  border-radius: 12px;
+  padding: 24px 32px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  max-width: 650px;
+  margin: 40px auto; /* centers it */
+  text-align: center;
+}
+
+.order-search-box h2 {
+  color: #002b18;
+  margin-bottom: 8px;
+}
+
+.order-search-box p {
+  color: #555;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.search-fields {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.order-search-box {
+  border: 2px solid #16dfa3;
+  background: #f8fffc;
+}
+
+.returns-info-banner {
+  background: #ecfdf5;              /* soft yellow */
+  border: 1px solid #6ee7b7;        /* golden border */
+  color: #065f46;                   /* deep amber text */
+  font-weight: 400;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 10px 0 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centers content horizontally */
+  text-align: center;      /* ensures multi-line text stays centered */
+  box-shadow: 0 3px 10px rgba(110, 231, 183, 0.25);
+}
+
+ :root{
+    --bg:#f4f7fb;
+    --card:#ffffff;
+    --text:#111827;
+    --muted:#6b7280;
+    --ring:#e5e7eb;
+    --shadow:0 10px 25px rgba(0,0,0,.06);
+    --grad-a:#00d084;  /* theme primary */
+    --grad-b:#23c2ef;  /* theme secondary */
+  }
+
+  .new-return-cta{
+    background:var(--card);
+    border:1px solid var(--ring);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:18px;
+  }
+
+  .nr-body{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    gap:14px;
+    align-items:center;
+  }
+
+  .nr-badge{
+    width:44px;height:44px;border-radius:999px;
+    display:grid;place-items:center;
+    background:linear-gradient(90deg,var(--grad-a),var(--grad-b));
+    box-shadow:0 10px 22px rgba(0,0,0,.08);
+  }
+
+  .nr-text h2{
+    margin:0 0 4px; font-size:1.25rem; font-weight:800; letter-spacing:.2px; color:var(--text);
+  }
+  .nr-sub{ margin:0; color:#374151; }
+  .nr-points{
+    margin:8px 0 0; padding-left:18px; color:#1f2937; line-height:1.45; font-size:.95rem;
+  }
+  .nr-points li{ margin:2px 0; }
+
+  .nr-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:12px 16px; min-width:200px;
+    color:#fff; text-decoration:none; font-weight:700; border-radius:10px;
+    background:linear-gradient(90deg,var(--grad-a),var(--grad-b));
+    box-shadow:0 10px 22px rgba(17,196,138,.18);
+    border:1px solid transparent;
+    transition:transform .1s ease, box-shadow .12s ease, opacity .15s ease;
+    white-space:nowrap;
+  }
+  .nr-btn:hover{ transform:translateY(-2px); box-shadow:0 14px 26px rgba(17,196,138,.22); }
+  .nr-btn:focus{ outline:2px solid #23c2ef; outline-offset:2px; }
+
+  .nr-help{
+    margin:10px 2px 0; font-size:.9rem; color:var(--muted);
+  }
+
+  /* Responsive: stack on smaller screens */
+  @media (max-width: 720px){
+    .nr-body{ grid-template-columns:1fr; }
+    .nr-btn{ width:100%; }
+  }
+
+    .section-head h2{
+    margin: 0 0 6px;
+    font-size: 1.15rem;      /* smaller than before */
+    line-height: 1.2;
+    font-weight: 800;        /* keep strong but compact */
+    letter-spacing: .2px;
+    color: var(--text);
+  }
+
+</style>
+</head>
+<body>
+
+<!-- components/header.html -->
+<div class="brandbar">
+  <div class="brandbar-inner">
+    <div class="brand">
+      <div class="mark">C</div>
+      <div>- <span id="sectionName">Returns</span></div>
+    </div>
+    <div class="brand" style="gap:6px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/>
+      </svg>
+      <div style="font-weight:700">Fast, fair &amp; friendly</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Account menu">
+    <div class="sb-head">Account</div>
+    <nav class="sb-nav">
+      <button class="sb-item" data-link="/account/orders">
+        <span class="sb-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </span>
+        <span>Your Orders</span>
+        <span class="chev">▾</span>
+      </button>
+      <button class="sb-item" data-link="/account/details">
+        <span class="sb-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        </span>
+        <span>Your Details</span>
+        <span class="chev">▾</span>
+      </button>
+      <button class="sb-item" data-link="/account/membership">
+        <span class="sb-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5 1.34 3.5 3 3.5Z"/><path d="M2 20v-1a4 4 0 0 1 4-4h6"/><path d="M9 11c1.66 0 3-1.57 3-3.5S10.66 4 9 4 6 5.57 6 7.5 7.34 11 9 11Z"/></svg>
+        </span>
+        <span>Membership</span>
+        <span class="chev">▾</span>
+      </button>
+      <button class="sb-item" data-link="/account/wishlist">
+        <span class="sb-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 22l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+        </span>
+        <span>Wishlist</span>
+        <span class="chev">▾</span>
+      </button>
+      <button class="sb-item active" data-link="Returns-landing.html">
+        <span class="sb-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </span>
+        <span>Returns</span>
+        <span class="go">›</span>
+      </button>
+      <button class="sb-item" data-link="index.html">
+        <span class="sb-ico">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+        </span>
+        <span>Log out</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="card">
+    <h2>Warranty & Return</h2>
+
+    <section class="new-return-cta" aria-labelledby="nr-title">
+  <div class="nr-body">
+    <div class="nr-badge" aria-hidden="true">
+      <!-- plus icon -->
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="2">
+        <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="nr-text">
+      <h2 id="nr-title">Start a New Return</h2>
+      <p class="nr-sub">Takes about 2–3 minutes. Have your receipt or serial number handy.</p>
+      <ul class="nr-points" aria-label="What you'll need">
+        <li>Product details</li>
+        <li>Purchase date & location</li>
+        <li>Optional: photo of receipt</li>
+      </ul>
+    </div>
+
+    <a href="returns-choose.html" class="nr-btn" id="startReturnBtn">Start New Return</a>
+  </div>
+
+  <p class="nr-help">
+    Made a purchase in-store? You can still lodge it here — we’ll ask for your receipt details.
+  </p>
+</section>
+
+<!-- Tabs header -->
+<div class="tabs" role="tablist" aria-label="Warranty & Return tabs">
+  <h2>Existing Return Requests</h2>
+</div>
+
+<!-- Panel: Existing Requests -->
+<section id="panel-existing" class="tabpanel" role="tabpanel" aria-labelledby="tab-existing">
+  <div class="row">
+    <div class="muted">3 requests placed in total</div>
+    <div class="muted">Search requests placed in</div>   
+    <select class="filter" id="rangeExisting">
+      <option>Last 30 Days</option>
+      <option>Last 60 Days</option>
+      <option>Last 90 Days</option>
+      <option>All time</option>
+    </select>
+  </div>
+
+  <div class="returns-info-banner">
+  <span style="font-size:18px; margin-right:8px;"></span>
+  When you create a return request, it will appear here with status and updates.
+</div>
+
+  <div id="returnsTable" class="rt-wrap"></div>
+
+  <!-- Empty state (replace with a list/table when you have data) -->
+
+</section>
+  
+</div>
+
+<script>
+// --- Example order→items data. Replace with your data source when ready.
+const ORDER_ITEMS = {
+  "ORD-41235": [
+    { sku:"GPU-4070-MSI", name:"GeForce RTX 4070 Ventus 12GB", serial:"SN4070-88121", qty:1 },
+    { sku:"CAB-8PIN",     name:"PCIe 8-pin Cable",               serial:"-",             qty:1 }
+  ],
+  "ORD-41182": [
+    { sku:"SSD-980PRO-2TB", name:"Samsung 980 PRO 2TB", serial:"SN2TB-55291", qty:1 }
+  ],
+  "ORD-41050": [
+    { sku:"PSU-750W", name:"Corsair RM750x PSU", serial:"SNPSU-44109", qty:1 }
+  ]
+};
+
+// --- Elements
+const modal      = document.getElementById('orderItemsModal');
+const itemsList  = document.getElementById('itemsList');
+const orderMeta  = document.getElementById('orderMeta');
+const btnCancel  = document.getElementById('itemsCancelBtn');
+const btnClose   = document.getElementById('itemsCloseBtn');
+const btnConfirm = document.getElementById('itemsConfirmBtn');
+
+let currentOrder = null;
+
+// Open modal from any "Return Item" button
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.btn-return');
+  if (!btn) return;
+  const orderId = btn.dataset.order;
+  openItemsModal(orderId);
+});
+
+function openItemsModal(orderId){
+  currentOrder = orderId;
+  orderMeta.textContent = `Order ${orderId}`;
+  renderItems(orderId);
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+}
+
+function closeItemsModal(){
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  currentOrder = null;
+  itemsList.innerHTML = '';
+}
+
+// Render order items as selectable rows
+function renderItems(orderId){
+  const items = ORDER_ITEMS[orderId] || [];
+  if (!items.length){
+    itemsList.innerHTML = `<div class="item-row"><div></div><div>No items found for this order.</div><div></div></div>`;
+    return;
+  }
+
+  itemsList.innerHTML = items.map((item, idx)=>`
+    <label class="item-row">
+      <input type="radio" name="returnItem" value="${idx}" ${idx===0?'checked':''}>
+      <div>
+        <div class="item-title">${item.name}</div>
+        <div class="item-meta">SKU: ${item.sku}${item.serial && item.serial!=='-' ? ` · Serial: ${item.serial}`:''} · Qty: ${item.qty}</div>
+      </div>
+      <span class="badge">Select</span>
+    </label>
+  `).join('');
+}
+
+// Confirm selection -> go to submit page with order+item info
+
+btnConfirm.addEventListener('click', ()=>{
+  const picked = itemsList.querySelector('input[name="returnItem"]:checked');
+  if (!picked){ alert('Please select an item.'); return; }
+
+  const idx   = Number(picked.value);
+  const item  = (ORDER_ITEMS[currentOrder] || [])[idx];
+  if (!item){ alert('Item not found.'); return; }
+
+  // Pass context to the submit page.
+  const url = new URL('Returns-terms-sub.html', location.href);
+  url.searchParams.set('order', currentOrder);
+  url.searchParams.set('sku', item.sku);
+  url.searchParams.set('serial', item.serial || '');
+  // You can add more (name, qty) if you wish.
+
+  window.location.href = url.toString();
+});
+
+btnCancel.addEventListener('click', closeItemsModal);
+btnClose.addEventListener('click', closeItemsModal);
+modal.addEventListener('click', (e)=>{ if (e.target === modal) closeItemsModal(); });
+</script>
+
+<script>
+  // Sidebar navigation
+  document.querySelectorAll('.sb-item').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const href = btn.dataset.link;
+      if (href) window.location.href = href;
+    });
+  });
+
+// Tabs: show/hide panels
+const tabButtons = [...document.querySelectorAll('.tabs .tab')];
+const panels = {
+  existing: document.getElementById('panel-existing'),
+  new: document.getElementById('panel-new')
+};
+
+function activateTab(name){
+  tabButtons.forEach(b=>{
+    const isActive = b.dataset.tab === name;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+  });
+  Object.entries(panels).forEach(([k,el])=>{
+    if (!el) return;
+    el.hidden = (k !== name);
+  });
+}
+
+tabButtons.forEach(b=>{
+  b.addEventListener('click', ()=> activateTab(b.dataset.tab));
+});
+
+// ----- Existing Requests table -----
+const returnsTableEl = document.getElementById('returnsTable');
+
+// Mock data (replace with your API results)
+const RETURNS = [
+  { id: '10248', created: '2025-08-14T10:35:00Z', order: 'INV-784512', item: 'RTX 4070 SUPER 12GB (GFX-4070S-MSI)', status: 'New',        updated: '2025-08-14T11:00:00Z' },
+  { id: '10231', created: '2025-08-10T09:12:00Z', order: 'INV-780003', item: 'Samsung 990 Pro 2TB (SSD-990PRO-2TB)',     status: 'In Progress', updated: '2025-08-12T16:20:00Z' },
+  { id: '10190', created: '2025-07-29T14:50:00Z', order: 'INV-776420', item: 'Cooler Master 750W PSU (PSU-CM-750)',      status: 'Closed',     updated: '2025-08-01T08:10:00Z' }
+];
+
+function fmtDate(d){
+  const x = new Date(d);
+  return x.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) +
+         ' ' + x.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+}
+function statusClass(s){
+  if (!s) return 'p-new';
+  const t = s.toLowerCase();
+  if (t.includes('progress')) return 'p-prog';
+  if (t.includes('close'))    return 'p-closed';
+  return 'p-new';
+}
+
+function renderReturns(rows) {
+  if (!returnsTableEl) return;
+
+  if (!rows || rows.length === 0) {
+    returnsTableEl.innerHTML = `
+      <div class="empty">
+        <div class="returns-info-banner">
+          ⚠️ When you create a return request, it will appear here with status and updates.
+        </div>
+        <div class="empty-title">No return requests yet</div>
+      </div>`;
+    return;
+  }
+
+  const head = `
+    <thead><tr>
+      <th>Return ID</th><th>Created</th><th>Order / Invoice</th>
+      <th>Item</th><th>Status</th><th>Last update</th><th></th>
+    </tr></thead>`;
+
+  const body = rows.map(r=>`
+    <tr>
+      <td class="mono" data-col="Return ID">${r.id}</td>
+      <td data-col="Created">${fmtDate(r.created)}</td>
+      <td class="mono" data-col="Order / Invoice">${r.order}</td>
+      <td data-col="Item">${r.item}</td>
+      <td data-col="Status"><span class="pill ${statusClass(r.status)}">${r.status}</span></td>
+      <td data-col="Last update">${fmtDate(r.updated)}</td>
+      <td class="actions" data-col=""><button class="btn-link" data-view="${r.id}">View</button></td>
+    </tr>`).join('');
+
+  returnsTableEl.innerHTML = `<table class="rt">${head}<tbody>${body}</tbody></table>`;
+
+  // Hook up "View" buttons
+  returnsTableEl.querySelectorAll('[data-view]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-view');
+      window.location.href = `Returns-view.html?id=${encodeURIComponent(id)}`;
+    });
+  });
+}
+
+// ----- Orders table (NEW REQUEST tab) -----
+const ordersTableEl = document.getElementById('ordersTable');
+
+// Mock orders data (replace later with real API)
+const ORDERS = [
+  { id: 'ORD-41235', placed: '2025-08-20T13:45:00Z', completed: '2025-08-23T15:22:00Z' },
+  { id: 'ORD-41182', placed: '2025-08-10T11:18:00Z', completed: '2025-08-12T09:32:00Z' },
+  { id: 'ORD-41050', placed: '2025-07-31T08:12:00Z', completed: '2025-08-01T16:50:00Z' }
+];
+
+function renderOrders(rows){
+  if (!ordersTableEl) return;
+
+  if (!rows || rows.length === 0){
+    ordersTableEl.innerHTML = `
+      <div class="empty">
+        <div class="empty-title">No recent orders found</div>
+        <p class="empty-sub">When you place an order, it will appear here for you to start a return.</p>
+      </div>`;
+    return;
+  }
+
+  const head = `
+    <thead><tr>
+      <th>Order #</th><th>Date Placed</th><th>Date Completed</th><th></th>
+    </tr></thead>`;
+
+const body = rows.map(r=>`
+  <tr>
+    <td class="mono" data-col="Order #">${r.id}</td>
+    <td data-col="Date Placed">${fmtDate(r.placed)}</td>
+    <td data-col="Date Completed">${fmtDate(r.completed)}</td>
+    <td class="actions" data-col="">
+      <button class="btn-return" data-order="${r.id}">Return Item</button>
+    </td>
+  </tr>`).join('');
+
+ordersTableEl.innerHTML = `<table class="rt">${head}<tbody>${body}</tbody></table>`;
+}
+
+// ----- Single tab callback (remove duplicates) -----
+function onTabChange(name){
+  if (name === 'existing') renderReturns(RETURNS);
+  if (name === 'new')      renderOrders(ORDERS);
+}
+
+// Ensure tab switch calls onTabChange:
+(function patchActivateTab(){
+  const tabButtons = [...document.querySelectorAll('.tabs .tab')];
+  const panels = {
+    existing: document.getElementById('panel-existing'),
+    new:      document.getElementById('panel-new')
+  };
+  const oldActivate = window.activateTab;
+  window.activateTab = function(name){
+    // run original
+    if (typeof oldActivate === 'function') oldActivate(name);
+    // then call our callback
+    onTabChange(name);
+  };
+})();
+
+// Initial state
+renderReturns(RETURNS);       // render Existing first
+activateTab('existing');      // select the Existing tab
+
+// Default to Existing Request on load (matches your screenshot)
+activateTab('existing');
+
+  // Fake search handler (wire to backend later)
+  const typeSel = document.getElementById('searchType');
+  const inputEl = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('clearBtn');
+  const searchBtn = document.getElementById('searchBtn');
+
+searchBtn.addEventListener('click', async () => {
+  const q = inputEl.value.trim();
+  const t = typeSel.value;
+  if (!q) {
+    alert('Please enter a value to search.');
+    inputEl.focus();
+    return;
+  }
+
+  // Create and show a fake searching overlay
+  const loader = document.createElement('div');
+  loader.className = 'loader-overlay';
+  loader.innerHTML = `
+    <div class="loader-box">
+      <div class="spinner"></div>
+      <p>Searching for records...</p>
+    </div>`;
+  document.body.appendChild(loader);
+
+  console.log('Searching', { type: t, query: q });
+
+  try {
+    // Simulate search delay (1.5s)
+    await new Promise(res => setTimeout(res, 0));
+
+    // Simulate “no match found” for now
+    const foundMatch = false; // replace later with real lookup
+
+    // Remove the loader
+    loader.remove();
+
+    if (!foundMatch) {
+      const redirectURL = `Returns-terms-no.html?searchType=${t}&searchValue=${encodeURIComponent(q)}&notfound=true`;
+      window.location.href = redirectURL;
+    } else {
+      alert(`Found matching record for ${q}`);
+    }
+  } catch (err) {
+    loader.remove();
+    console.error('Search failed', err);
+    alert('There was an error searching. Please try again.');
+  }
+});
+
+  // Preselect placeholder for each type
+  const placeholders = {
+    serial: 'SN23262B005289',
+    invoice:'INV-784512',
+    order:  'ORD-123456'
+  };
+  typeSel.addEventListener('change', ()=>{
+    inputEl.placeholder = placeholders[typeSel.value] || '';
+    inputEl.focus();
+  });
+  
+
+</script>
+</body>
+</html>
